@@ -1,0 +1,44 @@
+name: Build macOS app
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build and test (macOS)
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Test history store (Rust)
+        run: cargo test --release --locked --manifest-path history-store/Cargo.toml
+
+      - name: Build app bundle
+        run: macos/scripts/build-app.sh
+
+      - name: Test (Swift)
+        run: swift test --package-path macos
+
+      - name: Package
+        run: |
+          cd macos/build
+          ditto -c -k --keepParent "signal-cli Mac.app" signal-cli-mac.zip
+          shasum -a 256 signal-cli-mac.zip > signal-cli-mac.zip.sha256
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: signal-cli-mac
+          path: |
+            macos/build/signal-cli-mac.zip
+            macos/build/signal-cli-mac.zip.sha256

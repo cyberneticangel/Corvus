@@ -8,3 +8,7 @@ target/
 CMakeUserPresets.json
 .vscode/
 .idea/
+
+# macOS (Swift) app
+macos/.build/
+macos/build/
